@@ -1,4 +1,6 @@
-#include<bits/stdc++.h>//八数码问题 BFS
+#pragma GCC optimize(3, "Ofast", "inline")
+
+#include<bits/stdc++.h>//八数码问题 BFS 优化版
 
 using namespace std;
 #define db double
@@ -8,60 +10,77 @@ using namespace std;
 
 void check(string s)//检查是否有解
 {
-    if(s.length()!=9)
+    if (s.length() != 9)
     {
         printf("-1\n");
         exit(0);
     }
-    bool yes[9]={0};
-    for(auto x:s)
+    bool yes[9] = {0};
+    for (auto x: s)
+        if (x < '9' && x >= '0')yes[x - '0'] = 1;
+    for (int i = 0; i <= 8; i++)
     {
-        if(x<'9'&&x>='0')yes[x-'0']=1;
-        if(x=='x')yes[0]=1;
-    }
-    for(int i=0;i<=8;i++)
-    {
-        if(!yes[i])
+        if (!yes[i])
         {
             printf("-1\n");
             exit(0);
         }
     }
-    int nxs=0;//逆序数
-    for(int i=0;i<9;i++)
-        for(int j=i+1;j<9;j++)
+    int nxs = 0;//逆序数
+    for (int i = 0; i < 9; i++)
+        for (int j = i + 1; j < 9; j++)
         {
-            char a=s[i],b=s[j];
-            if (a=='x'||b=='x')continue;
-            if(a>b)nxs++;
+            char a = s[i], b = s[j];
+            if (a == '0' || b == '0')continue;
+            if (a > b)nxs++;
         }
-    if(nxs%2==1)
+    if (nxs % 2 == 1)
     {
         printf("-1\n");
         exit(0);
     }
 }
 
+bool vis[400000];
+int jc[10];
+
+
+inline int kt(string str)
+{
+    int ans = 0;
+    int len = str.length();
+    for(int i = 0; i < len; i++){
+        int tmp = 0;
+        for(int j = i + 1; j < len; j++)
+            if(str[i] > str[j]) tmp++;
+        ans += tmp * jc[len - i - 1];
+    }
+    return ans;
+}
+
 
 void solve()
 {
     string s = "";
+    jc[0]=1;
+    for(int i=1;i<9;i++)
+        jc[i]=i*jc[i-1];
 
     for (int i = 1; i <= 9; i++)
     {
         string tmp;
         cin >> tmp;
-        s = s + tmp;
+        if (tmp == "x")s = s + '0';
+        else s = s + tmp;
     }
 
     check(s);
 
-    set<string> st;//vis
     pii op[5] = {{0,  0},
-                 {1,  0},
                  {0,  1},
-                 {-1, 0},
-                 {0, -1}};//可选的操作，上下左右交换
+                 {1,  0},
+                 {0,  -1},
+                 {-1, 0}};//可选的操作，上下左右交换
     queue<pair<int, string>> q;
 
     q.emplace(0, s);
@@ -69,15 +88,15 @@ void solve()
     {
         auto now = q.front();
         q.pop();
-        if (now.second == "12345678x")
+        if (now.second == "123456780")
         {
             printf("%d\n", now.first);
             exit(0);
         }
-        st.insert(now.second);
+        vis[kt(now.second)] = 1;
         for (int i = 0; i < 9; i++)
         {
-            if (now.second[i] == 'x')
+            if (now.second[i] == '0')
             {
                 string tmp;
                 int x, y;
@@ -89,7 +108,12 @@ void solve()
                     {
                         tmp = now.second;
                         swap(tmp[i], tmp[x * 3 + y]);
-                        if (!st.count(tmp))
+                        if (tmp == "123456780")
+                        {
+                            printf("%d\n", now.first+1);
+                            exit(0);
+                        }
+                        else if (!vis[kt(tmp)])
                         {
                             q.emplace(1 + now.first, tmp);
                         }
@@ -105,9 +129,6 @@ void solve()
 
 signed main()
 {
-    cin.tie(0);
-    cout.tie(0);
-    ios::sync_with_stdio(0);
 
     solve();
 
